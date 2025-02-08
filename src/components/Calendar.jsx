@@ -1,71 +1,70 @@
 import { useState, useRef } from "react";
 
-const initialEvents = [
-  {
-    id: "1",
-    title: "Event 1",
-    start: "2025-02-02 00:00",
-    end: "2025-02-04 21:15",
-    resource: "Resource A",
-    color: "#ffcdd2", // Light red
-  },
-  {
-    id: "2",
-    title: "Event 2",
-    start: "2025-02-10 09:00",
-    end: "2025-02-13 15:00",
-    resource: "Resource C",
-    color: "#bbdefb", // Light blue
-  },
-  {
-    id: "3",
-    title: "Event 3",
-    start: "2025-02-13 00:00",
-    end: "2025-02-13 12:00",
-    resource: "Resource D",
-    color: "#f8bbd0", // Light pink
-  },
-  {
-    id: "4",
-    title: "Event 4",
-    start: "2025-02-15 07:00",
-    end: "2025-02-15 12:00",
-    resource: "Resource E",
-    color: "#c8e6c9", // Light green
-  },
-  {
-    id: "5",
-    title: "Event 5",
-    start: "2025-02-03 00:00",
-    end: "2025-02-03 23:45",
-    resource: "Resource F",
-    color: "#fff9c4", // Light yellow
-  },
-  {
-    id: "6",
-    title: "Event 6",
-    start: "2025-02-10 08:00",
-    end: "2025-02-10 20:00",
-    resource: "Resource G",
-    color: "#b2ebf2", // Light cyan
-  }
-];
-
-const initialResources = [
-  "Resource A",
-  "Resource B",
-  "Resource C",
-  "Resource D",
-  "Resource E",
-  "Resource F",
-  "Resource G",
-  "Resource H",
-];
-
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [events, setEvents] = useState(initialEvents);
-  const [resources] = useState(initialResources);
+  const [events, setEvents] = useState([
+    {
+      id: "1",
+      title: "Event 1",
+      start: "2025-02-02 00:00",
+      end: "2025-02-04 21:15",
+      resource: "Resource A",
+      color: "#ffcdd2",
+    },
+    {
+      id: "2",
+      title: "Event 2",
+      start: "2025-02-10 09:00",
+      end: "2025-02-13 15:00",
+      resource: "Resource C",
+      color: "#bbdefb",
+    },
+    {
+      id: "3",
+      title: "Event 3",
+      start: "2025-02-13 00:00",
+      end: "2025-02-13 12:00",
+      resource: "Resource D",
+      color: "#f8bbd0",
+    },
+    {
+      id: "4",
+      title: "Event 4",
+      start: "2025-02-15 07:00",
+      end: "2025-02-15 12:00",
+      resource: "Resource E",
+      color: "#c8e6c9",
+    },
+    {
+      id: "5",
+      title: "Event 5",
+      start: "2025-02-03 00:00",
+      end: "2025-02-03 23:45",
+      resource: "Resource F",
+      color: "#fff9c4",
+    },
+    {
+      id: "6",
+      title: "Event 6",
+      start: "2025-02-10 08:00",
+      end: "2025-02-10 20:00",
+      resource: "Resource G",
+      color: "#b2ebf2",
+    }
+  ]);
+  
+  const [resources] = useState([
+    "Resource A",
+    "Resource B",
+    "Resource C",
+    "Resource D",
+    "Resource E",
+    "Resource F",
+    "Resource G",
+    "Resource H",
+  ]);
+  
+  const [showMiniCalendar, setShowMiniCalendar] = useState(false);
   const [draggingEvent, setDraggingEvent] = useState(null);
   const [resizing, setResizing] = useState(null);
   const dragStartPos = useRef(null);
@@ -76,6 +75,32 @@ const Calendar = () => {
     const month = date.getMonth();
     const days = new Date(year, month + 1, 0).getDate();
     return Array.from({ length: days }, (_, i) => new Date(year, month, i + 1));
+  };
+
+  const getMiniCalendarDays = () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    
+    const days = [];
+    const startDay = firstDay.getDay();
+    
+    for (let i = 0; i < startDay; i++) {
+      const prevDate = new Date(year, month, -i);
+      days.unshift(prevDate);
+    }
+    
+    for (let i = 1; i <= lastDay.getDate(); i++) {
+      days.push(new Date(year, month, i));
+    }
+    
+    const remainingDays = 42 - days.length;
+    for (let i = 1; i <= remainingDays; i++) {
+      days.push(new Date(year, month + 1, i));
+    }
+    
+    return days;
   };
 
   const prevMonth = () => {
@@ -151,10 +176,9 @@ const Calendar = () => {
     const event = events.find(evt => evt.id === resizing.eventId);
     if (!event) return;
 
-    // Calculate new dates based on mouse movement
     const deltaX = e.clientX - dragStartPos.current.x;
-    const daysChange = Math.round(deltaX / 100); // Assuming each day cell is 100px wide
-
+    const daysChange = Math.round(deltaX / 100);
+    
     setEvents(events.map(evt => {
       if (evt.id === resizing.eventId) {
         const newDates = { ...evt };
@@ -208,10 +232,66 @@ const Calendar = () => {
     width: '100%'
   });
 
+  const MiniCalendar = () => {
+    const days = getMiniCalendarDays();
+    const today = new Date();
+
+    return (
+      <div className="absolute top-16 left-4 bg-white shadow-lg rounded-lg p-4 z-50 w-64">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-blue-500 font-semibold">
+            {currentDate.toLocaleString("default", {
+              month: "long",
+              year: "numeric",
+            })}
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={prevMonth}
+              className="text-gray-600 hover:text-blue-500"
+            >
+              ‹
+            </button>
+            <button
+              onClick={nextMonth}
+              className="text-gray-600 hover:text-blue-500"
+            >
+              ›
+            </button>
+          </div>
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {["S", "M", "T", "W", "T", "F", "S"].map((day) => (
+            <div key={day} className="text-center text-gray-500 text-sm">
+              {day}
+            </div>
+          ))}
+          {days.map((date, index) => (
+            <div
+              key={index}
+              className={`text-center p-1 text-sm ${
+                date.getMonth() !== currentDate.getMonth()
+                  ? "text-gray-300"
+                  : isCurrentDate(date)
+                  ? "bg-blue-500 text-white rounded-full"
+                  : "text-gray-700"
+              }`}
+            >
+              {date.getDate()}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="w-full h-full bg-white">
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <h2 className="text-2xl text-blue-500 font-normal">
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 relative">
+        <h2 
+          className="text-2xl text-blue-500 font-normal cursor-pointer"
+          onClick={() => setShowMiniCalendar(!showMiniCalendar)}
+        >
           {currentDate.toLocaleString("default", {
             month: "long",
             year: "numeric",
@@ -237,6 +317,7 @@ const Calendar = () => {
             ›
           </button>
         </div>
+        {showMiniCalendar && <MiniCalendar />}
       </div>
 
       <div className="overflow-auto">
